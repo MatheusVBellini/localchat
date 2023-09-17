@@ -1,12 +1,13 @@
 #include <iostream>
 
+#ifdef DEBUG
 #define DEFINE_MESSAGE(level, str)                                             \
-  if (DEBUG) {                                                                 \
     std::cerr << #level << " at " << __FILE__ << ":" << __LINE__ << ": "       \
-              << str << std::endl;                                             \
-  } else {                                                                     \
-    std::cerr << #level ": " << str << std::endl;                              \
-  }
+              << str << std::endl;
+#else
+#define DEFINE_MESSAGE(level, str)                                             \
+    std::cerr << #level ": " << str << std::endl;
+#endif
 
 #ifdef DEBUG
 #define debug(str) DEFINE_MESSAGE(debug, str)
