@@ -6,13 +6,16 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <unistd.h>
+#include <fcntl.h>
+#include <unordered_map>
+#include <list>
 #include "utils.h"
 
 class Server {
     private:
-        short connections;
-        short maxConnections;
-        int socket_fd;
+        short  connections;
+        short  maxConnections;
+        int    socket_fd;
         struct sockaddr_in server_addr;
 
     public:
@@ -23,8 +26,8 @@ class Server {
         // Close the socket
         ~Server();
         
-        // Run the
-        void run();
+        // Check any new connection attempts and handle it
+        void checkConnections();
 
         // Return the total number of clients connected to host
         int getConnections() const;

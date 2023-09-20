@@ -4,6 +4,6 @@
 int main(void) { 
     Server server;
     std::cout << server.getConnections() << std::endl;
-    server.listen();
+    server.checkConnections();
     std::cout << server.getConnections() << std::endl;
 }

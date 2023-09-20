@@ -10,6 +10,16 @@ Server::Server(std::string ip, int port, short maxConnections) {
         error("Failed to create socket");
     }
 
+    // Set socket to non-blocking mode
+    int flags = fcntl(this->socket_fd, F_GETFL, 0);
+    if (flags == -1) {
+        error("fcntl get failed");
+    }
+    int non_block_result = fcntl(this->socket_fd, F_SETFL, flags | O_NONBLOCK);
+    if (non_block_result == -1) {
+        error("fcntl set failed");
+    }
+
     this->server_addr.sin_family = AF_INET;
     this->server_addr.sin_addr.s_addr = INADDR_ANY;
     this->server_addr.sin_port = htons(port);
@@ -31,8 +41,12 @@ Server::~Server() {
     close(this->socket_fd);
 }
 
-void Server::run() {
-
+void Server::checkConnections() {
+    struct sockaddr client_addr;
+    int client_fd = accept(this->socket_fd, &client_addr, NULL);
+    if (client_fd >= 0) {
+        this->connections++;
+    }
 }
 
 int Server::getConnections() const {
