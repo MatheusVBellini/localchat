@@ -21,9 +21,12 @@ class Client {
         std::string username;
         void setUsername(std::string usr);
         Message buildMessage(std::string content);
+        Message reconstructMessage(char str_msg[]);
+        int getClientSocket();
     public:
         Client(std::string username, std::string ip, int port);
         ~Client();
         void run();
         bool sendMessage(std::string message);
+        Message receiveMessage();
 };

@@ -37,21 +37,31 @@ Client::Client(std::string username, std::string server_ip, int server_port) {
 
 }
 
+int Client::getClientSocket(){
+    return this->client_socket;
+}
+
 void Client::setUsername(std::string usr){
+    // this makes the usr always the same size (10 char  '\0')
     if(usr.size() > 10){
-        std::string new_usr;
-        new_usr = usr.substr(0,10);
-        this->username = new_usr;
-    }else{
-        this->username = usr;
+        usr = usr.substr(0,10);
     }
+    else if(usr.size() < 10){
+        usr = usr.append('\0' , 10 - usr.size());
+    }
+    this->username = usr;
 }
 
 Message Client::buildMessage(std::string content){
+    // this makes every content 200 of size (plus one \0)
     if(content.size() > 200){
         content = content.substr(200,0);
     }
+    else if(content.size() < 200){
+        content.append('\0', 200 - content.size());
+    }
 
+    // now we build the struct having all the fields
     Message msg;
     msg.message_content = content;
     msg.username = this->username;
@@ -63,11 +73,31 @@ Message Client::buildMessage(std::string content){
 bool Client::sendMessage(std::string message){
     Message msg_to_send = this->buildMessage(message);
     
+    // serializes the message by copying it to another region of memory
+    // where a string references
     char serialized_msg[sizeof(Message)];
     std::memcpy(serialized_msg, &msg_to_send, sizeof(Message));
 
-    send(client_socket, serialized_msg,sizeof(serialized_msg), 0);
+    send(this->getClientSocket(), serialized_msg,sizeof(serialized_msg), 0);
     // what if it doesnt send it all?
 
     return true;
+}
+
+Message Client::reconstructMessage(char str_msg[]){
+    Message struct_msg;
+    std::memcpy(&struct_msg, str_msg, sizeof(Message));
+
+    return struct_msg;
+}
+
+Message Client::receiveMessage(){
+    char serialized_msg[sizeof(Message)];
+    recv(this->getClientSocket(), serialized_msg, sizeof(Message), 0);
+    // what if it doesnt receive everything? 
+
+    Message msg;
+    msg = this->reconstructMessage(serialized_msg);
+
+    return msg;   
 }
