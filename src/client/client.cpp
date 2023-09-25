@@ -27,7 +27,7 @@ Client::Client(std::string username, std::string server_ip, int server_port) {
     inet_pton(AF_INET, server_ip.c_str(), &this->server_addr.sin_addr); // Convert IPv4 and IPv6 addresses from text to binary form
 
     if (connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
-            error("coudl not connect client to server");
+            error("could not connect client to server");
             return;
     }else{
         debug("client connected")
