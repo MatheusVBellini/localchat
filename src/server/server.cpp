@@ -16,12 +16,13 @@ extern "C" {
 Server::Server(std::string ip, int port, int maxWaiters) {
     this->connections = 0;
 
-    // Socket configuration
+    // create the server socket
     this->server_fd = socket(AF_INET, SOCK_STREAM, 0);
     if (this->server_fd < 0) {
         error("Failed to create socket");
     }
 
+    // add server properties
     this->server_addr.sin_family = AF_INET;
     this->server_addr.sin_addr.s_addr = INADDR_ANY;
     this->server_addr.sin_port = htons(port);
@@ -64,12 +65,13 @@ void acceptNewClients(Server* server) {
     int client_fd;
     socklen_t client_size = sizeof(client_addr);
 
+    // block and wait for new clients
     client_fd = accept(server->server_fd, &client_addr, &client_size);
     if (client_fd < 0) {
       break;
     }
 
-    // Set socket to non-blocking mode
+    // set the new client socket to non-blocking mode
     int flags = fcntl(client_fd, F_GETFL, 0);
     if (flags == -1) {
         error("fcntl get failed");
@@ -81,8 +83,8 @@ void acceptNewClients(Server* server) {
 
     server->connections++;
 
+    // and add the client file descriptor to the epoll list
     event.data.fd = client_fd;
-
     int ret = epoll_ctl(server->epoll_fd, EPOLL_CTL_ADD, client_fd, &event);
     if(ret < 0) {
       break;
@@ -93,30 +95,37 @@ void acceptNewClients(Server* server) {
 }
 
 void Server::run(void) {
+  // create the new client listener
   std::thread server_reader(acceptNewClients, this);
 
   struct epoll_event event;
   event.events = EPOLLIN;
 
   while(true) {
+    // wait for client events
     epoll_wait(this->epoll_fd, &event, 1, -1);
 
     char buffer[4096];
     int bytes_read;
 
+    // read and process the client data
     while ((bytes_read = read(event.data.fd, buffer, 4095)) > 0) {
       buffer[bytes_read] = '\0';
       std::cout << buffer << std::endl;
     }
 
+    // EOF received
     if(bytes_read == 0) {
       error("not implemented");
     }
 
+    // the file descriptor would block, meaning we should wait for new data 
+    // from clients
     if (errno == EWOULDBLOCK) {
       continue;
     }
 
+    // another error: panic
     error("client read: " << strerror(errno));
   }
 }
