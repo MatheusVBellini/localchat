@@ -1,4 +1,4 @@
-CXXFLAGS  += -Wall -Wextra -Wpedantic -Iinclude
+CXXFLAGS  += -Wall -Wextra -Wpedantic -Iinclude -std=c++11
 LDFLAGS   +=
 
 SERVER = build/server.out
