@@ -27,6 +27,8 @@ class Server {
         // funcion that manages the acceptance of new clients
         friend void acceptNewClients(Server* server);
 
+        void closeClient(struct epoll_event e);
+
     public:
 
         // Initiate basic specifications of the server

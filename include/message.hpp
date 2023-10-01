@@ -21,7 +21,7 @@ public:
 
   void send(int socket_fd);
 
-  static Message *recv(int socket_fd);
+  static Message *recv(int socket_fd, bool& eof);
 
   std::string getContent(void);
   std::time_t getTimestamp(void);

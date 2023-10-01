@@ -12,7 +12,7 @@ extern "C" {
 }
 } // namespace std
 
-std::map<int, std::pair<int, char*>> Message::messages_in_progress_map;
+std::map<int, std::pair<int, char *>> Message::messages_in_progress_map;
 
 Message::Message(std::string content, std::string username,
                  std::time_t timestamp) {
@@ -71,11 +71,12 @@ void Message::send(int socket_fd) {
   debug("sent message correctly");
 }
 
-Message *Message::recv(int socket_fd) {
-  auto& recv_message = messages_in_progress_map[socket_fd];
-  if(recv_message.second == nullptr){
-    recv_message = {0, new char[MESSAGE_SIZE]};
-    messages_in_progress_map[socket_fd] = recv_message;
+Message *Message::recv(int socket_fd, bool &eof) {
+  eof = false;
+  auto &recv_message = messages_in_progress_map[socket_fd];
+  if (recv_message.second == nullptr) {
+    messages_in_progress_map[socket_fd] = {0, new char[MESSAGE_SIZE]};
+    recv_message = messages_in_progress_map[socket_fd];
   }
 
   debug("getting message");
@@ -89,17 +90,31 @@ Message *Message::recv(int socket_fd) {
         return nullptr;
       }
 
-      error("error receiving message: " << strerror(errno));
-    }
+      info("error receiving message: " << strerror(errno));
 
+      delete[] recv_message.second;
+      messages_in_progress_map.erase(socket_fd);
+      return nullptr;
+    }
     if (ret == 0) {
-      error("unexpected EOF");
+
+
+      if (recv_message.first == 0) {
+        eof = true;
+        delete[] recv_message.second;
+        messages_in_progress_map.erase(socket_fd);
+        return nullptr;
+      }
+
+      info("got unexpected EOF while receiving message");
+
+      delete[] recv_message.second;
+      messages_in_progress_map.erase(socket_fd);
+      return nullptr;
     }
 
     recv_message.first += ret;
   }
-
-  messages_in_progress_map.erase(socket_fd);
 
   debug("got message correctly, with raw data " << recv_message.second);
 
@@ -108,7 +123,12 @@ Message *Message::recv(int socket_fd) {
       std::string(recv_message.second + 210, MESSAGE_SIZE - 210));
   ss >> std::get_time(&timestamp_tm, "%Y-%m-%d %H:%M:%S");
 
-  return new Message(std::string(recv_message.second, 200),
-                     std::string(recv_message.second + 200, 10),
-                     std::mktime(&timestamp_tm));
+  Message *m = new Message(std::string(recv_message.second, 200),
+                           std::string(recv_message.second + 200, 10),
+                           std::mktime(&timestamp_tm));
+
+  delete[] recv_message.second;
+  messages_in_progress_map.erase(socket_fd);
+
+  return m;
 }

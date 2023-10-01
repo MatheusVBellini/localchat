@@ -98,6 +98,11 @@ void acceptNewClients(Server *server) {
   error("server accept new clients failed: " << strerror(errno));
 }
 
+void Server::closeClient(struct epoll_event event) {
+  close(event.data.fd);
+  epoll_ctl(epoll_fd, EPOLL_CTL_DEL, event.data.fd, &event);
+}
+
 void Server::run(void) {
   // create the new client listener
   std::thread server_reader(acceptNewClients, this);
@@ -110,12 +115,17 @@ void Server::run(void) {
     epoll_wait(this->epoll_fd, &event, 1, -1);
 
     // read and process the client data
-    Message *m = Message::recv(event.data.fd);
+    bool eof;
+    Message *m = Message::recv(event.data.fd, eof);
+    if (eof) {
+      closeClient(event);
+    }
     if (m == nullptr) {
       continue;
     }
 
     std::cout << m->getUsername() << " said " << m->getContent() << std::endl;
+    delete m;
   }
 }
 
