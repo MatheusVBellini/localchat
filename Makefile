@@ -17,7 +17,7 @@ clean:
 run: $(SERVER) $(CLIENT)
 	@./$(SERVER) $(SERVER_ARGS) 2>build/server.logs && ./$(CLIENT) $(CLIENT_ARGS) 2>./build/client.logs
 
-debug: CXXFLAGS+=-g3 -O0 -DDEBUG
+debug: CXXFLAGS+=-g3 -DDEBUG
 debug: clean
 debug: $(SERVER) $(CLIENT)
 

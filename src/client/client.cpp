@@ -37,6 +37,10 @@ Client::Client(std::string username, std::string server_ip, int server_port) {
 
 }
 
+Client::~Client(){
+  close(client_socket);
+}
+
 int Client::getClientSocket(){
     return this->client_socket;
 }
