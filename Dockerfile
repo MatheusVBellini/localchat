@@ -8,7 +8,7 @@ COPY ./Makefile ./LICENSE /srv/
 COPY ./include/ /srv/include/
 COPY ./src/ /srv/src/
 
-RUN make build/server.out 
+RUN make build/server.out
 RUN strip --strip-all /srv/build/server.out
 
 FROM alpine:3.18

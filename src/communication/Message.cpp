@@ -1,4 +1,4 @@
-#include "message.hpp"
+#include "Message.h"
 
 #include "utils.h"
 
@@ -35,13 +35,13 @@ Message::Message(std::string content, std::string username,
   this->timestamp = timestamp;
 }
 
-std::string Message::getContent(void) { return message_content; }
+const std::string Message::getContent(void) { return message_content; }
 
-std::string Message::getUsername(void) { return username; }
+const std::string Message::getUsername(void) { return username; }
 
 std::time_t Message::getTimestamp(void) { return this->timestamp; }
 
-void Message::send(int socket_fd) {
+bool Message::send(int socket_fd) {
   char message_data[MESSAGE_SIZE];
 
   std::memcpy(message_data, this->message_content.c_str(), 200);
@@ -59,7 +59,7 @@ void Message::send(int socket_fd) {
 
     if (ret <= 0) {
       if (errno == EWOULDBLOCK || errno == EINPROGRESS) {
-        continue;
+        return false;
       }
 
       error("error sending message: " << strerror(errno));
@@ -69,6 +69,7 @@ void Message::send(int socket_fd) {
   }
 
   debug("sent message correctly");
+  return true;
 }
 
 Message *Message::recv(int socket_fd, bool &eof) {
@@ -97,8 +98,6 @@ Message *Message::recv(int socket_fd, bool &eof) {
       return nullptr;
     }
     if (ret == 0) {
-
-
       if (recv_message.first == 0) {
         eof = true;
         delete[] recv_message.second;
@@ -122,6 +121,9 @@ Message *Message::recv(int socket_fd, bool &eof) {
   std::istringstream ss(
       std::string(recv_message.second + 210, MESSAGE_SIZE - 210));
   ss >> std::get_time(&timestamp_tm, "%Y-%m-%d %H:%M:%S");
+  if (!ss) {
+    error("invalid timestamp received");
+  }
 
   Message *m = new Message(std::string(recv_message.second, 200),
                            std::string(recv_message.second + 200, 10),

@@ -1,4 +1,4 @@
-#include "../../include/client.hpp"
+#include "client.hpp"
 
 Client::Client(std::string username, std::string server_ip, int server_port) {
     this->setUsername(username);

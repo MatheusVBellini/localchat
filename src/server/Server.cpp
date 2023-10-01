@@ -1,6 +1,6 @@
-#include "server.h"
+#include "Server.h"
 
-#include "message.hpp"
+#include "Message.h"
 #include "utils.h"
 
 extern "C" {

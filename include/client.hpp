@@ -11,7 +11,7 @@
 #include <list>
 #include <cstring>
 #include "utils.h"
-#include "message.hpp"
+#include "Message.h"
 
 class Client {
     private:
