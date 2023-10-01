@@ -3,15 +3,11 @@
 #include "message.hpp"
 #include "utils.h"
 
-#include <iomanip>
-#include <thread>
-
 extern "C" {
 #include <arpa/inet.h>
 #include <fcntl.h>
 #include <string.h>
 #include <sys/epoll.h>
-#include <sys/socket.h>
 #include <unistd.h>
 }
 
@@ -49,6 +45,15 @@ Server::Server(std::string ip, int port, int maxWaiters) {
   if (this->epoll_fd < 0) {
     error("epoll creation failed");
   }
+
+  struct epoll_event event;
+  event.events = EPOLLIN;
+  event.data.fd = this->server_fd;
+
+  int ret = epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, this->server_fd, &event);
+  if (ret < 0) {
+    error("server epoll self setup failed: " << strerror(errno));
+  }
 }
 
 Server::~Server(void) {
@@ -57,62 +62,60 @@ Server::~Server(void) {
   close(this->epoll_fd);
 }
 
-void acceptNewClients(Server *server) {
+void Server::acceptNewClient(void) {
   struct epoll_event event;
   event.events = EPOLLIN;
 
-  while (true) {
-    struct sockaddr client_addr;
-    int client_fd;
-    socklen_t client_size = sizeof(client_addr);
+  struct sockaddr client_addr;
+  int client_fd;
+  socklen_t client_size = sizeof(client_addr);
 
-    // block and wait for new clients
-    client_fd = accept(server->server_fd, &client_addr, &client_size);
-    if (client_fd < 0) {
-      break;
-    }
-
-    // set the new client socket to non-blocking mode
-    int flags = fcntl(client_fd, F_GETFL, 0);
-    if (flags == -1) {
-      error("fcntl get failed");
-    }
-    int non_block_result = fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
-    if (non_block_result == -1) {
-      error("fcntl set failed");
-    }
-
-    server->connections++;
-
-    // and add the client file descriptor to the epoll list
-    event.data.fd = client_fd;
-    int ret = epoll_ctl(server->epoll_fd, EPOLL_CTL_ADD, client_fd, &event);
-    if (ret < 0) {
-      break;
-    }
-
-    Message m("thank you for connecting, you may now send messages", "server");
-    m.send(event.data.fd);
+  // block and wait for new clients
+  client_fd = accept(this->server_fd, &client_addr, &client_size);
+  if (client_fd < 0) {
+    error("server accept new client failed: " << strerror(errno));
   }
 
-  error("server accept new clients failed: " << strerror(errno));
+  // set the new client socket to non-blocking mode
+  int flags = fcntl(client_fd, F_GETFL, 0);
+  if (flags == -1) {
+    error("fcntl get failed");
+  }
+  int non_block_result = fcntl(client_fd, F_SETFL, flags | O_NONBLOCK);
+  if (non_block_result == -1) {
+    error("fcntl set failed");
+  }
+
+  this->connections++;
+
+  // and add the client file descriptor to the epoll list
+  event.data.fd = client_fd;
+  int ret = epoll_ctl(this->epoll_fd, EPOLL_CTL_ADD, client_fd, &event);
+  if (ret < 0) {
+    error("server accept new clients failed: " << strerror(errno));
+  }
+
+  Message m("thank you for connecting, you may now send messages", "server");
+  m.send(event.data.fd);
 }
 
 void Server::closeClient(struct epoll_event event) {
+  this->connections--;
   close(event.data.fd);
   epoll_ctl(epoll_fd, EPOLL_CTL_DEL, event.data.fd, &event);
 }
 
 void Server::run(void) {
-  // create the new client listener
-  std::thread server_reader(acceptNewClients, this);
-
   struct epoll_event event;
   event.events = EPOLLIN;
 
   while (true) {
     // wait for client events
     epoll_wait(this->epoll_fd, &event, 1, -1);
+    if (event.data.fd == this->server_fd) {
+      acceptNewClient();
+      continue;
+    }
 
     // read and process the client data
     bool eof;

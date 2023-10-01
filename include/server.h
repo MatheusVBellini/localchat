@@ -24,8 +24,7 @@ class Server {
         // struct associated with server_fd
         struct sockaddr_in server_addr;
 
-        // funcion that manages the acceptance of new clients
-        friend void acceptNewClients(Server* server);
+        void acceptNewClient(void);
 
         void closeClient(struct epoll_event e);
 
