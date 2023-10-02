@@ -11,6 +11,7 @@ Client::Client(std::string username, std::string server_ip, int server_port) {
         error("Failed to create socket from client");
     }
 
+    /* deprecated for now, new approach with blocking sockets on client
     // Set socket to non-blocking mode
     int flags = fcntl(this->client_socket, F_GETFL, 0);
     if (flags == -1) {
@@ -20,11 +21,16 @@ Client::Client(std::string username, std::string server_ip, int server_port) {
     if (non_block_result == -1) {
         error("client fcntl set failed");
     }
+    */
 
     this->server_addr.sin_family = AF_INET;
-    // this->server_addr.sin_addr.s_addr = INADDR_ANY; // is this really necessary?
     this->server_addr.sin_port = htons(server_port);
-    inet_pton(AF_INET, server_ip.c_str(), &this->server_addr.sin_addr); // Convert IPv4 and IPv6 addresses from text to binary form
+
+    // Convert IPv4 and IPv6 addresses from text to binary form
+    if( inet_pton(AF_INET, server_ip.c_str(), &this->server_addr.sin_addr) <= 0){
+        error("invalid server adress");
+        close(client_socket);
+    }
 
     if (connect(client_socket, (struct sockaddr*)&server_addr, sizeof(server_addr)) == -1) {
             error("could not connect client to server");

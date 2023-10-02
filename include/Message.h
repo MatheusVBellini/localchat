@@ -18,6 +18,10 @@ private:
   // nonblocking possibility of sockets.
   static std::map<int, std::pair<int, char *>> messages_in_progress_map;
 
+  // private setters used only on constructor to parse fields accordingly
+  void setContent(std::string content);
+  void setUsername(std::string username);
+
 public:
   Message(std::string content, std::string username,
           std::time_t timestamp = std::time(nullptr));

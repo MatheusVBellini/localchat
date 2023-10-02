@@ -16,30 +16,39 @@ std::map<int, std::pair<int, char *>> Message::messages_in_progress_map;
 
 Message::Message(std::string content, std::string username,
                  std::time_t timestamp) {
-  if (content.size() > 200) {
-    content = content.substr(200, 0);
-  } else if (content.size() < 200) {
-    content.append(200 - content.size(), '\0');
-  }
-
-  if (username.size() > 10) {
-    username = username.substr(0, 10);
-  } else if (username.size() < 10) {
-    username = username.append(10 - username.size(), '\0');
-  }
-
-  this->username = username;
-
-  this->message_content = content;
-
+  this->setUsername(username);
+  this->setContent(content);
   this->timestamp = timestamp;
 }
 
+// getters
 const std::string Message::getContent(void) { return message_content; }
 
 const std::string Message::getUsername(void) { return username; }
 
 std::time_t Message::getTimestamp(void) { return this->timestamp; }
+
+
+// private setters
+ void Message::setContent(std::string content){
+    if (content.size() > 200) {
+     content = content.substr(200, 0);
+    } else if (content.size() < 200) {
+      content.append(200 - content.size(), '\0');
+    }
+
+    this->message_content = content;
+ }
+  void Message::setUsername(std::string username){
+    if (username.size() > 10) {
+      username = username.substr(0, 10);
+    } else if (username.size() < 10) {
+      username = username.append(10 - username.size(), '\0');
+    }
+
+    this->username = username;
+  }
+
 
 bool Message::send(int socket_fd) {
   char message_data[MESSAGE_SIZE];
