@@ -16,11 +16,19 @@ int main() {
     mvprintw(5,5, "Byebye World !!!");
     refresh();                            // atualiza conteudos da tela
 
+
+    // cria uma caixa na tela
+    WINDOW *win = newwin(3, 20, y/2 -1, x/2 - 8);
+    box(win, 0, 0);
+    mvwprintw(win, 1, 2, "Text:");
+    wrefresh(win);
+
     // le uma string em um ponto especificado da tela
     char msg[1024];
     echo();
     mvscanw(y/2,x/2, msg);
     noecho();
+
 
     getch();
 
