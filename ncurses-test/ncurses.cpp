@@ -11,13 +11,16 @@ int main() {
     // adquire tamanho da tela
     int y, x; getmaxyx(stdscr, y, x);
 
+
+
     // mostra conteudo na tela
     printw("Hello World !!!");
     mvprintw(5,5, "Byebye World !!!");
+    mvhline(1,1, '-', x-2);               // desenha uma linha horizontal
+    mvvline(1,1, '|', y-3);               // desenha uma linha vertical
     refresh();                            // atualiza conteudos da tela
 
-
-    // cria uma caixa na tela
+    // cria uma prompt na tela usando um sub-tela
     WINDOW *win = newwin(3, 20, y/2 -1, x/2 - 8);
     box(win, 0, 0);
     mvwprintw(win, 1, 2, "Text:");
@@ -33,6 +36,8 @@ int main() {
     getch();
 
     // fecha tela
+    delwin(win);
     endwin();
+    return 0;
 
 }
