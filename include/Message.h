@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 
-#define MESSAGE_SIZE (200 + 10 + 4 + 2 + 2 + 2 + 2 + 2 + 6)
+#define MESSAGE_SIZE (200 + 10 + 8)
 
 // class Message is the communication unit of localchat, containing a username
 // that sent the message, the contents, and a timestamp.

@@ -18,7 +18,7 @@ int main(void) {
       time_t timestamp = m->getTimestamp();
 
       std::strftime(timestamp_c, sizeof(timestamp_c), "%H:%M:%S",
-                    std::gmtime(&timestamp));
+                    std::localtime(&timestamp));
 
       std::cout << "[" << timestamp_c << "] " << m->getUsername()
                 << " said: " << m->getContent() << std::endl;

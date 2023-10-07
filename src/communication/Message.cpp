@@ -52,10 +52,11 @@ void Message::setUsername(std::string username) {
 bool Message::send(int socket_fd) {
   char message_data[MESSAGE_SIZE];
 
+  uint64_t timestamp_ull = this->timestamp;
+
   std::memcpy(message_data, this->message_content.c_str(), 200);
   std::memcpy(message_data + 200, this->username.c_str(), 10);
-  std::strftime(message_data + 210, sizeof(message_data) - 210,
-                "%Y-%m-%d %H:%M:%S", std::gmtime(&timestamp));
+  std::memcpy(message_data + 210, &timestamp_ull, 8);
 
   debug("sending message with raw data " << message_data);
 
@@ -131,17 +132,13 @@ Message *Message::recv(int socket_fd, bool &eof) {
 
   debug("got message correctly, with raw data " << recv_message.second);
 
-  std::tm timestamp_tm{};
-  std::istringstream ss(
-      std::string(recv_message.second + 210, MESSAGE_SIZE - 210));
-  ss >> std::get_time(&timestamp_tm, "%Y-%m-%d %H:%M:%S");
-  if (!ss) {
-    error("invalid timestamp received");
-  }
+
+  uint64_t timestamp_ull;
+  std::memcpy(&timestamp_ull, recv_message.second+210, 8);
 
   Message *m = new Message(std::string(recv_message.second, 200),
                            std::string(recv_message.second + 200, 10),
-                           std::mktime(&timestamp_tm));
+                           timestamp_ull);
 
   delete[] recv_message.second;
   messages_in_progress_map.erase(socket_fd);
