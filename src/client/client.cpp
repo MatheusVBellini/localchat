@@ -46,15 +46,12 @@ void Client::sendMessage(std::string content) {
   m.send(client_socket);
 }
 
-std::string Client::getMessage(void) {
+Message* Client::getMessage(void) {
   bool eof;
   auto *m = Message::recv(client_socket, eof);
   if (eof == true || m == nullptr) {
     error("client got eof or nullptr");
   }
 
-  auto content = m->getContent();
-  delete m;
-
-  return content;
+  return m;
 }

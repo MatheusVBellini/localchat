@@ -26,6 +26,6 @@ class Client {
         Client(std::string username, std::string ip, int port);
         ~Client();
         void sendMessage(std::string content);
-        std::string getMessage(void);
+        Message* getMessage(void);
 
 };
