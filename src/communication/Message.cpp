@@ -89,7 +89,7 @@ Message *Message::recv(int socket_fd, bool &eof) {
     recv_message = messages_in_progress_map[socket_fd];
   }
 
-  debug("getting message");
+  debug("getting message from " << socket_fd);
 
   int ret;
   while (recv_message.first != MESSAGE_SIZE) {
@@ -97,6 +97,7 @@ Message *Message::recv(int socket_fd, bool &eof) {
                     MESSAGE_SIZE - recv_message.first, 0);
     if (ret < 0) {
       if (errno == EWOULDBLOCK || errno == EINPROGRESS) {
+        debug("message would block, retuning to main loop");
         return nullptr;
       }
 
@@ -108,6 +109,8 @@ Message *Message::recv(int socket_fd, bool &eof) {
     }
     if (ret == 0) {
       if (recv_message.first == 0) {
+        debug("message is EOF, setting eof flag");
+
         eof = true;
         delete[] recv_message.second;
         messages_in_progress_map.erase(socket_fd);

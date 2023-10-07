@@ -76,6 +76,8 @@ void Server::acceptNewClient(void) {
     error("server accept new client failed: " << strerror(errno));
   }
 
+  debug("got new client with fd " << client_fd);
+
   // set the new client socket to non-blocking mode
   int flags = fcntl(client_fd, F_GETFL, 0);
   if (flags == -1) {
@@ -100,12 +102,16 @@ void Server::acceptNewClient(void) {
 }
 
 void Server::closeClient(struct epoll_event event) {
+  debug("closing connection with client " << event.data.fd);
+
   this->connections--;
   close(event.data.fd);
   epoll_ctl(epoll_fd, EPOLL_CTL_DEL, event.data.fd, &event);
 }
 
 void Server::run(void) {
+  info("starting main server loop");
+
   struct epoll_event event;
   event.events = EPOLLIN;
 
@@ -116,6 +122,8 @@ void Server::run(void) {
       acceptNewClient();
       continue;
     }
+
+    debug("got epoll event from client " << event.data.fd);
 
     // read and process the client data
     bool eof;
