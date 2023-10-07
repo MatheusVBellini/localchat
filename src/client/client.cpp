@@ -39,3 +39,22 @@ void Client::setUsername(std::string usr) {
   }
   this->username = usr;
 }
+
+void Client::sendMessage(std::string content) {
+  auto m = Message(content, username);
+
+  m.send(client_socket);
+}
+
+std::string Client::getMessage(void) {
+  bool eof;
+  auto* m = Message::recv(client_socket, eof);
+  if(eof == true || m == nullptr){
+    error("client got eof or nullptr");
+  }
+
+  auto content = m->getContent();
+  delete m;
+
+  return content;
+}
