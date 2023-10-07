@@ -48,8 +48,8 @@ void Client::sendMessage(std::string content) {
 
 std::string Client::getMessage(void) {
   bool eof;
-  auto* m = Message::recv(client_socket, eof);
-  if(eof == true || m == nullptr){
+  auto *m = Message::recv(client_socket, eof);
+  if (eof == true || m == nullptr) {
     error("client got eof or nullptr");
   }
 

@@ -12,8 +12,6 @@ extern "C" {
 }
 
 Server::Server(std::string ip, int port, int maxWaiters) {
-  this->connections = 0;
-
   // create the server socket
   this->server_fd = socket(AF_INET, SOCK_STREAM, 0);
   if (this->server_fd < 0) {
@@ -78,6 +76,12 @@ void Server::acceptNewClient(void) {
 
   debug("got new client with fd " << client_fd);
 
+  Message m("thank you for connecting, you may now send messages", "server");
+
+  // at this point, the file descriptor is blockable, this makes sure we
+  // actually send the whole intro message to the client without spinlocking
+  m.send(client_fd);
+
   // set the new client socket to non-blocking mode
   int flags = fcntl(client_fd, F_GETFL, 0);
   if (flags == -1) {
@@ -88,7 +92,7 @@ void Server::acceptNewClient(void) {
     error("fcntl set failed");
   }
 
-  this->connections++;
+  clients.insert(client_fd);
 
   // and add the client file descriptor to the epoll list
   event.data.fd = client_fd;
@@ -96,15 +100,13 @@ void Server::acceptNewClient(void) {
   if (ret < 0) {
     error("server accept new clients failed: " << strerror(errno));
   }
-
-  Message m("thank you for connecting, you may now send messages", "server");
-  m.send(event.data.fd);
 }
 
 void Server::closeClient(struct epoll_event event) {
   debug("closing connection with client " << event.data.fd);
 
-  this->connections--;
+  clients.erase(event.data.fd);
+
   close(event.data.fd);
   epoll_ctl(epoll_fd, EPOLL_CTL_DEL, event.data.fd, &event);
 }
@@ -136,8 +138,16 @@ void Server::run(void) {
     }
 
     std::cout << m->getUsername() << " said " << m->getContent() << std::endl;
+
+    for (auto c : clients) {
+      if (c == event.data.fd) {
+        continue;
+      }
+
+      while (m->send(c) == false)
+        ;
+    }
+
     delete m;
   }
 }
-
-int Server::getConnections(void) const { return this->connections; }

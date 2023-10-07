@@ -14,6 +14,8 @@ private:
   std::time_t timestamp;
   std::string message_content;
 
+  std::map<int, int> sending_positions;
+
   // an internal map to manage receiving of new messages partially, due to the
   // nonblocking possibility of sockets.
   static std::map<int, std::pair<int, char *>> messages_in_progress_map;

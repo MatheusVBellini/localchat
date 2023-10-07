@@ -5,6 +5,7 @@ extern "C" {
 }
 
 #include <string>
+#include <set>
 
 // class Server implements the complete localchat server. It uses two threads
 // to manage clients: one waits for new clients to connect, and the other waits
@@ -12,9 +13,6 @@ extern "C" {
 // polling system.
 class Server {
 private:
-  // current amount of clients connected
-  short connections;
-
   // file descriptor that listens for new clients
   int server_fd;
 
@@ -23,6 +21,8 @@ private:
 
   // struct associated with server_fd
   struct sockaddr_in server_addr;
+
+  std::set<int> clients;
 
   // acceptNewClient accepts a single client, should be only called when
   // server_fd is ready for reading
@@ -41,7 +41,4 @@ public:
 
   // main server loop: accepts new connections
   void run(void);
-
-  // Return the total number of clients connected to host
-  int getConnections(void) const;
 };

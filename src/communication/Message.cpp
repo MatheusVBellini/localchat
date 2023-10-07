@@ -59,7 +59,7 @@ bool Message::send(int socket_fd) {
 
   debug("sending message with raw data " << message_data);
 
-  int sent = 0;
+  int sent = sending_positions[socket_fd];
   int ret;
   while (sent != sizeof(message_data)) {
     ret = std::send(socket_fd, message_data - sent, sizeof(message_data) - sent,
@@ -67,6 +67,7 @@ bool Message::send(int socket_fd) {
 
     if (ret <= 0) {
       if (errno == EWOULDBLOCK || errno == EINPROGRESS) {
+        sending_positions[socket_fd] = sent;
         return false;
       }
 
@@ -75,6 +76,8 @@ bool Message::send(int socket_fd) {
 
     sent += ret;
   }
+
+  sending_positions.erase(socket_fd);
 
   debug("sent message correctly");
   return true;
@@ -128,7 +131,7 @@ Message *Message::recv(int socket_fd, bool &eof) {
 
   debug("got message correctly, with raw data " << recv_message.second);
 
-  std::tm timestamp_tm;
+  std::tm timestamp_tm{};
   std::istringstream ss(
       std::string(recv_message.second + 210, MESSAGE_SIZE - 210));
   ss >> std::get_time(&timestamp_tm, "%Y-%m-%d %H:%M:%S");
