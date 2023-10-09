@@ -1,5 +1,5 @@
-CXXFLAGS  += -Wall -Wextra -Wpedantic -Iinclude -std=c++11
-LDFLAGS   +=
+CXXFLAGS  += -Wall -Wextra -Wpedantic -Iinclude -std=c++11 -lncurses
+LDFLAGS   += -lncurses
 
 SERVER = build/server.out
 CLIENT = build/client.out
