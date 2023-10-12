@@ -24,9 +24,17 @@ Client::Client(std::string username, std::string server_ip, int server_port) {
 
   debug("client connected");
   this->is_connected = true;
+
+  auto m = Message(username, true);
+  m.send(client_socket);
 }
 
-Client::~Client() { close(client_socket); }
+Client::~Client() {
+  auto m = Message(username, false);
+  m.send(client_socket);
+
+  close(client_socket);
+}
 
 int Client::getClientSocket() { return this->client_socket; }
 
@@ -41,12 +49,12 @@ void Client::setUsername(std::string usr) {
 }
 
 void Client::sendMessage(std::string content) {
-  auto m = Message(content, username);
+  auto m = Message(username, content);
 
   m.send(client_socket);
 }
 
-Message* Client::getMessage(void) {
+Message *Client::getMessage(void) {
   bool eof;
   auto *m = Message::recv(client_socket, eof);
   if (eof == true || m == nullptr) {
