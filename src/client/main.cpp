@@ -115,7 +115,8 @@ int main(void) {
         msgeBox.write(buffer);
         msgeBox.clear();
     }
-  
+
+    c.~Client();
     endwin();
     exit(0);
 }

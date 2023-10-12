@@ -36,10 +36,12 @@ const std::string Message::getContent(void) {
     throw std::invalid_argument("message must be of type chat for operation");
   }
 
-  return message_content;
+  return message_content.substr(0, message_content.find('\0'));
 }
 
-const std::string Message::getUsername(void) { return username; }
+const std::string Message::getUsername(void) {
+  return username.substr(0, username.find('\0'));
+}
 
 std::time_t Message::getTimestamp(void) { return this->timestamp; }
 
@@ -104,7 +106,6 @@ bool Message::send(int socket_fd) {
   int sent = sending_positions[socket_fd];
   int ret;
   while (sent < size_to_send) {
-    debug(sent);
     ret = std::send(socket_fd, message_data - sent, sizeof(message_data) - sent,
                     0);
 
