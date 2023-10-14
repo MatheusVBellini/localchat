@@ -40,10 +40,27 @@ int main(void) {
 
       std::stringstream messagestream;
       messagestream << "[" << timestamp_c << "] " << m->getUsername();
-      chatBox.write(messagestream.str());
-      std::string message;
-      message += " said:    " + m->getContent();
-      chatBox.write(message);
+
+
+      switch (m->getType()) {
+      case MESSAGE_CHAT:
+        messagestream << " said: " << m->getContent();
+        break;
+      case MESSAGE_CONNECT:
+        messagestream << " connected";
+        break;
+      case MESSAGE_DISCONNECT:
+        messagestream << " disconnected";
+        break;
+      default:
+        messagestream << " sent an invalid message";
+        break;
+      }
+
+
+      chatBox.write(messagestream.str().c_str());
+      chatBox.refresh();
+
       delete m;
     }
   });
@@ -65,6 +82,8 @@ int main(void) {
         msgeBox.clearInput();
         msgeBox.writeInput();
     }
+
+    c.~Client();
 
     endwin();
     exit(0);

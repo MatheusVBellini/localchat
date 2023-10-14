@@ -4,12 +4,19 @@
 #include <map>
 #include <string>
 
-#define MESSAGE_SIZE (200 + 10 + 8)
+#define MESSAGE_SIZE_CHAT (1 + 200 + 10 + 8)
+#define MESSAGE_SIZE_CONN (1 + 10 + 8)
+#define MESSAGE_SIZE_MAX MESSAGE_SIZE_CHAT
+
+#define MESSAGE_CHAT 0
+#define MESSAGE_CONNECT 1
+#define MESSAGE_DISCONNECT 2
 
 // class Message is the communication unit of localchat, containing a username
 // that sent the message, the contents, and a timestamp.
 class Message {
 private:
+  uint8_t type;
   std::string username;
   std::time_t timestamp;
   std::string message_content;
@@ -25,7 +32,10 @@ private:
   void setUsername(std::string username);
 
 public:
-  Message(std::string content, std::string username,
+  Message(std::string username, std::string content,
+          std::time_t timestamp = std::time(nullptr));
+
+  Message(std::string username, bool connection_initiated = true,
           std::time_t timestamp = std::time(nullptr));
 
   // send sends the message to a file descriptor, it returns true if the data
@@ -39,6 +49,7 @@ public:
 
   // getters:
 
+  uint8_t getType(void);
   const std::string getContent(void);
   const std::string getUsername(void);
   std::time_t getTimestamp(void);

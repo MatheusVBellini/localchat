@@ -76,12 +76,6 @@ void Server::acceptNewClient(void) {
 
   debug("got new client with fd " << client_fd);
 
-  Message m("thank you for connecting, you may now send messages", "server");
-
-  // at this point, the file descriptor is blockable, this makes sure we
-  // actually send the whole intro message to the client without spinlocking
-  m.send(client_fd);
-
   // set the new client socket to non-blocking mode
   int flags = fcntl(client_fd, F_GETFL, 0);
   if (flags == -1) {
@@ -136,8 +130,6 @@ void Server::run(void) {
     if (m == nullptr) {
       continue;
     }
-
-    std::cout << m->getUsername() << " said " << m->getContent() << std::endl;
 
     for (auto c : clients) {
       if (c == event.data.fd) {
