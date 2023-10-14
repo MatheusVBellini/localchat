@@ -6,54 +6,57 @@
 
 #include <string>
 
+/* Function to create a window in ncurses */
 WINDOW* new_window_box(int y_beg, int x_beg, int y_max, int x_max, std::string win_name);
 
-class Window {
+class ChatElement {
 public:
     WINDOW* win;
-    std::string win_name;
-    int y_beg, x_beg;
-    int y_max, x_max;
+    std::string element_title;
+    int y_max, x_max, y_min, x_min;
+    int y_beg, x_beg, y_end, x_end;
+    int wwidth, wheight;
+    
+    ChatElement(std::string element_title);
 
-    Window(int y_beg, int x_beg, int y_max, int x_max, std::string win_name);
-
-    void write(std::string text);
-    void clear();
-    void refresh(); // atualiza a tela
+    virtual auto computeBounds() -> void {}
+    auto clear() -> void;
+    auto initWindow() -> void; 
+    virtual auto write(std::string text) -> void;
 };
 
-class Header : public Window {
+/* Header of the Chat */
+class Header : public ChatElement{
 public:
-    Header(int y_beg, int x_beg, int y_max, int x_max)
-        : Window(y_beg, x_beg, y_max, x_max, std::string("Chat")) {}
+    Header();
+
+    virtual auto computeBounds() -> void override;
 };
 
-class ChatBox : public Window {
+/* Body of the Chat (The chat box) */
+class ChatBox : public ChatElement {
 public:
     int line_num=1;
 
-    ChatBox(int y_beg, int x_beg, int y_max, int x_max)
-        : Window(y_beg, x_beg, y_max, x_max, std::string("Messages")) {}
+    ChatBox();
 
-    void write(std::string text) {
-        if(line_num < (y_max - y_beg - 1)) {
-            mvwprintw(this->win, line_num++, 1, "%s", text.c_str());
-        } else {
-            std::string buffer;
-            buffer.resize((x_max - x_beg) - 2 ,' ');
-            for(int i = 1; i < y_max; i++) {
-                mvwprintw(this->win, i, 1, "%s", buffer.c_str());    
-            }
-            
-            box(this->win, 0, 0);
-            mvwprintw(this->win, 0, 0, "%s", this->win_name.c_str());
-            this->line_num = 1;
-        }
-    }
+    virtual auto computeBounds() -> void override;
+    
+    auto write(std::string text) -> void override; 
 };
 
-class MsgeBox : public Window {
+/* The box to input message */
+class MsgeBox : public ChatElement {
+    std::string input_buffer;
 public:
-    MsgeBox(int y_beg, int x_beg, int y_max, int x_max)
-        : Window(y_beg, x_beg, y_max, x_max, std::string("Write a new message")) {}
+    MsgeBox();
+    
+    virtual auto computeBounds() -> void override;
+
+    auto receiveInput() -> char;
+    auto acceptInput(char input) -> void;
+    auto isCloseCommand() -> bool;
+    auto writeInput() -> void;
+    auto clearInput() -> void;
+    auto getInputBuffer() -> std::string;
 };
