@@ -132,10 +132,6 @@ void Server::run(void) {
     }
 
     for (auto c : clients) {
-      if (c == event.data.fd) {
-        continue;
-      }
-
       while (m->send(c) == false)
         ;
     }
