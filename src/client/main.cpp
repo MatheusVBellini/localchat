@@ -59,7 +59,6 @@ int main(void) {
 
 
       chatBox.write(messagestream.str().c_str());
-      chatBox.refresh();
 
       delete m;
     }

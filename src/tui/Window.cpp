@@ -90,6 +90,7 @@ void ChatBox::write(std::string text) {
         mvwprintw(this->win, 0, 0, "%s", this->element_title.c_str());
         this->line_num = 1;
     }
+    wrefresh(this->win);
 }
 
 MsgeBox::MsgeBox(): ChatElement("Write a new message") {
