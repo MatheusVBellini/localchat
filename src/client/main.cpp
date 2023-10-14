@@ -1,16 +1,34 @@
 #include "client.hpp"
 #include "utils.h"
+#include "tui/Window.hpp"
 
 #include <ctime>
+#include <sstream>
 #include <thread>
 
 int main(void) {
-  std::string username;
-  std::cin >> username;
+    std::string username;
+    std::cin >> username;
 
-  auto c = Client(username, "127.0.0.1", 8080);
+    auto c = Client(username, "127.0.0.1", 8080);
 
-  auto reader_t = std::thread([&c]() {
+    initscr();
+//    cbreak();
+//    raw();
+    noecho();
+
+    auto header = Header();
+    header.initWindow();
+
+    auto chatBox = ChatBox();
+    chatBox.initWindow();
+
+    auto msgeBox = MsgeBox();
+    msgeBox.initWindow();
+
+    keypad(msgeBox.win, true);
+
+    auto reader_t = std::thread([&c, &chatBox]() {
     while (true) {
       auto *m = c.getMessage();
 
@@ -20,21 +38,52 @@ int main(void) {
       std::strftime(timestamp_c, sizeof(timestamp_c), "%H:%M:%S",
                     std::localtime(&timestamp));
 
-      std::cout << "[" << timestamp_c << "] " << m->getUsername()
-                << " said: " << m->getContent() << std::endl;
+      std::stringstream messagestream;
+      messagestream << "[" << timestamp_c << "] " << m->getUsername();
+
+
+      switch (m->getType()) {
+      case MESSAGE_CHAT:
+        messagestream << " said: " << m->getContent();
+        break;
+      case MESSAGE_CONNECT:
+        messagestream << " connected";
+        break;
+      case MESSAGE_DISCONNECT:
+        messagestream << " disconnected";
+        break;
+      default:
+        messagestream << " sent an invalid message";
+        break;
+      }
+
+
+      chatBox.write(messagestream.str().c_str());
+
       delete m;
     }
   });
 
-  std::string content;
-  std::getline(std::cin, content, '\n'); // discard initial \n from username
-
-  while (!std::getline(std::cin, content, '\n').eof()) {
-    if (content == ":q") {
-      break;
+    while(true) {
+      int input = (int) msgeBox.receiveInput();
+        
+       while(input != 10) { // ENTER CODE
+         msgeBox.acceptInput((char) input);
+         msgeBox.writeInput(); 
+          input = (int) msgeBox.receiveInput();
+        }
+        
+        if(msgeBox.isCloseCommand()) {
+            break;
+        }
+        
+        c.sendMessage(msgeBox.getInputBuffer().c_str());
+        msgeBox.clearInput();
+        msgeBox.writeInput();
     }
-    c.sendMessage(content);
-  }
 
-  exit(0);
+    c.~Client();
+
+    endwin();
+    exit(0);
 }
